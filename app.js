@@ -1,97 +1,46 @@
-import {createServer} from 'http'
-import  fs from 'fs/promises'
-import crypto from 'crypto'
-import path from 'path'
-const PORT=process.env.PORT||4000
-const DATA_FILE=path.join("data","links.json")
+import express from "express";
+import requestIP from "request-ip"
+import { shortenerRoutes } from "./routes/shorterner.routes.js";
+import { authRoutes } from "./routes/auth.routes.js";
+import cookieParser from "cookie-parser";
+import {verifyauthentication} from "./middleware/verify-auth-middlewares.js"
+import session from "express-session"
+import flash from "connect-flash"
 
 
-const serverFile=async (res,path,contenttype)=>{
-	try {
-		const data= await fs.readFile(path)
-		res.writeHead(200,{'Content-Type':contenttype})
-		res.end(data)
-	} catch (error) {
-		res.writeHead(404,{'Content-Type':contenttype})
-		res.end("Error 404:Page not found")
-	}
-}
+const app = express();
+
+const PORT =3000;
+
+app.use(express.static("public"));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());  //?Whenever a request sends JSON data, parse it and put it into req.body.”
 
 
-const loadlinks=async()=>{
-     try {
-		const info=await fs.readFile(DATA_FILE,'utf-8')
-		return JSON.parse(info)
-	 } catch (error) {
-		if(error.code==='ENOENT'){
-			await fs.writeFile(DATA_FILE,JSON.stringify({}))
-			return {};
-		}
-		throw error
-	 }
-}
+app.set("view engine", "ejs");
+// app.set("views", "./views")
+app.use(cookieParser())
 
-const savelinks=async(links)=>{
-	await fs.writeFile(DATA_FILE,JSON.stringify(links,null,2))
-}
-const server=createServer(async (req,res)=>
-	// console.log(req.url)
-{
-	if(req.method==='GET'){
-		if(req.url==='/'){
-			return serverFile(res,'index.html','text/html')
-		}
-	
-		else if (req.url==='/style.css'){
-			return serverFile(res,'style.css','text/css')
-		}
+//! use session and flash in the middle of cookieparser and authentication
+app.use(session({secret:"parash",resave:true,saveUninitialized:false}));
+app.use(flash());
 
-		else if(req.url==='/links'){
-			const links=await loadlinks()
-			res.writeHead(200,{'Content-Type':'application/json'})
-		    return res.end(JSON.stringify(links))
-		}
-		else
-		{
-			const links=await loadlinks()
-			const shortCode=req.url.slice(1);
-			if(links[shortCode])
-			{
-				res.writeHead(302,{location:links[shortCode]})
-				 return res.end();
-			}
-			res.writeHead(404,{'Content-Type':'text/plain'})
-		    return res.end("Shortened URL not found")
-		}
-	}
+//using requestIp middleware
+app.use(requestIP.mw())
 
-	if (req.method==='POST' && req.url==='/Shorten')
-	{
-		const links=await loadlinks()
-		let body="";
-		req.on('data',(chunk)=>body+=chunk)
-		req.on('end',async ()=>{
-			const {url,shortCode}=JSON.parse(body)
-			if(!url)
-			{
-				res.writeHead(400,{'Content-Type':'text/plain'})
-		        return res.end(" URL is required")
-	        }
-			const finalshortcode=shortCode || crypto.randomBytes(4).toString('hex')
-			if(links[finalshortcode])
-			{
-				res.writeHead(409,{'Content-Type':'text/plain'})
-		        return res.end("Error : shortcode duplicate found")
-				
-			}
-			links[finalshortcode]=url;
-			await savelinks(links);
-				res.writeHead(200,{'Content-Type':'application/json'})
-		        res.end(JSON.stringify({success:true,shortCode:finalshortcode}))
-			})
-		}
-	}
-)
-server.listen(PORT,()=>{
-	console.log(`Server running at http://localhost:${PORT}`)
+//!
+
+app.use(verifyauthentication)
+//!
+app.use((req,res,next)=>{
+	res.locals.user=req.user;  //res.locals used to send data to views now we can use data of req.user as user in ejs files
+	return next();
 })
+//!
+
+app.use(authRoutes);
+app.use(shortenerRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
