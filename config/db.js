@@ -1,7 +1,10 @@
 import mysql from "mysql2/promise";
 import { drizzle } from "drizzle-orm/mysql2";
 import dotenv from "dotenv";
-dotenv.config();
+
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 // Log to check your URL
 console.log("CURRENT DB:", process.env.DATABASE_URL);
 
