@@ -409,16 +409,13 @@ export const getGoogleLoginPage = async (req, res) => {
   // openid → authentication
   // profile → basic user details
   // email → user email address
-const redirectUri =
-  process.env.NODE_ENV === "production"
-    ? "https://url-shortener-jtc9.onrender.com/google/callback"
-    : "http://localhost:3000/google/callback";
+
 
 const url = google.createAuthorizationURL(state, codeVerifier, [
   "openid",
   "profile",
   "email",
-], redirectUri);
+]);
 
   // ✅ Step 4: Configure secure cookie settings
   const cookieConfig = {
