@@ -1262,7 +1262,9 @@ footer .social-links a:hover {
     text-align: center;
     transition: 0.3s ease;
 }
-
+.contact-card p {
+    word-break: break-all;
+}
 .contact-card:hover {
     transform: translateY(-6px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
