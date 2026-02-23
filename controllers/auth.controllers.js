@@ -418,7 +418,7 @@ export const getGoogleLoginPage = async (req, res) => {
   // ✅ Step 4: Configure secure cookie settings
   const cookieConfig = {
     httpOnly: true,                // Prevents client-side JS access
-    secure: true,                  // Sends cookie only over HTTPS
+    secure: process.env.NODE_ENV === "production", // Sends cookie only over HTTPS
     maxAge: OAUTH_EXCHANGE_EXPIRY, // Expiry time for OAuth process
     sameSite: "lax",               // Allows cookies during redirect from Google
   };

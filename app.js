@@ -11,7 +11,7 @@ import flash from "connect-flash"
 const app = express();
 
 const PORT=process.env.PORT || 3000;
-
+app.set("trust proxy", 1);
 app.use(express.static("public"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());  //?Whenever a request sends JSON data, parse it and put it into req.body.”
