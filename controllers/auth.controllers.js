@@ -415,8 +415,9 @@ const url = google.createAuthorizationURL(state, codeVerifier, [
   "openid",
   "profile",
   "email",
-]);
-
+], {
+  redirect_uri: process.env.GOOGLE_CALLBACK_URL
+});
   // ✅ Step 4: Configure secure cookie settings
   const cookieConfig = {
     httpOnly: true,                // Prevents client-side JS access
